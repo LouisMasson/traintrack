@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
       longitude: train.longitude,
       speed: train.speed,
       direction: train.direction,
-      // delay: train.delay, // TODO: Add delay column to train_positions table
+      delay: train.delay,
       timestamp: train.timestamp,
     }));
 

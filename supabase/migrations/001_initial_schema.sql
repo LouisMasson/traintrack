@@ -10,10 +10,20 @@ CREATE TABLE IF NOT EXISTS train_positions (
   longitude DOUBLE PRECISION NOT NULL,
   speed DOUBLE PRECISION,
   direction DOUBLE PRECISION,
-  delay INTEGER,
   timestamp TIMESTAMPTZ NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Add delay column if it doesn't exist (for existing tables)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'train_positions' AND column_name = 'delay'
+  ) THEN
+    ALTER TABLE train_positions ADD COLUMN delay INTEGER;
+  END IF;
+END $$;
 
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_train_positions_timestamp ON train_positions(timestamp DESC);
