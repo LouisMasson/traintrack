@@ -62,6 +62,8 @@ export async function fetchSwissTrains(): Promise<TrainPosition[]> {
         longitude: station.coordinate.y,
         speed: null, // Not available from this API
         direction: null,
+        destination: entry.to || null,
+        delay: entry.stop.delay ?? null,
         timestamp,
       });
     }

@@ -5,6 +5,8 @@ export interface TrainPosition {
   longitude: number;
   speed: number | null;
   direction: number | null;
+  destination: string | null;
+  delay: number | null;
   timestamp: string;
   created_at?: string;
 }
@@ -14,6 +16,7 @@ export interface TrainMetadata {
   route: string | null;
   destination: string | null;
   train_type: string | null;
+  delay: number | null;
   last_seen: string | null;
   updated_at?: string;
 }

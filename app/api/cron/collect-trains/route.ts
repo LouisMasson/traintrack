@@ -16,18 +16,28 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: true, count: 0, message: 'No trains found' });
     }
 
-    // Insert train positions
+    // Insert train positions (only base fields that exist in DB)
+    const positionsToInsert = trains.map((train) => ({
+      train_no: train.train_no,
+      latitude: train.latitude,
+      longitude: train.longitude,
+      speed: train.speed,
+      direction: train.direction,
+      timestamp: train.timestamp,
+    }));
+
     const { error: positionsError } = await supabaseAdmin
       .from('train_positions')
-      .insert(trains);
+      .insert(positionsToInsert);
 
     if (positionsError) {
       throw new Error(`Failed to insert positions: ${positionsError.message}`);
     }
 
-    // Update train metadata (last_seen timestamp)
+    // Update train metadata (destination, last_seen - delay stored in memory only)
     const metadataUpdates = trains.map((train) => ({
       train_no: train.train_no,
+      destination: train.destination,
       last_seen: train.timestamp,
       updated_at: train.timestamp,
     }));

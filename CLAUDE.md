@@ -78,3 +78,8 @@ Required in `.env.local`:
 - Endpoints: `/stationboard`, `/locations`, `/connections`
 - No authentication required
 - 100% free, CORS enabled
+
+## MCP
+
+- Always use Context7 MCP when I need library/API documentation, code generation, setup or configuration steps without me having to explicitly ask.
+- Use Playwright MCP when test interface needed.

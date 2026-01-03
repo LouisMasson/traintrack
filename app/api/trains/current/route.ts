@@ -1,27 +1,47 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { TrainPosition } from '@/types/train';
 
 export async function GET() {
   try {
     // Get positions from the last 2 minutes to ensure we have recent data
     const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
 
-    // Get the latest position for each train
-    const { data, error } = await supabase
+    // Get the latest positions
+    const { data: positions, error: positionsError } = await supabase
       .from('train_positions')
       .select('*')
       .gte('timestamp', twoMinutesAgo)
       .order('timestamp', { ascending: false });
 
-    if (error) {
-      throw new Error(`Database error: ${error.message}`);
+    if (positionsError) {
+      throw new Error(`Database error: ${positionsError.message}`);
     }
 
-    // Deduplicate to get only the latest position per train
-    const latestPositions = new Map<string, typeof data[0]>();
-    for (const position of data || []) {
+    // Get metadata for enriched data (destination)
+    const { data: metadata, error: metadataError } = await supabase
+      .from('train_metadata')
+      .select('train_no, destination');
+
+    if (metadataError) {
+      console.error('Failed to fetch metadata:', metadataError.message);
+    }
+
+    // Create metadata lookup map
+    const metadataMap = new Map(
+      (metadata || []).map((m) => [m.train_no, m])
+    );
+
+    // Deduplicate and enrich with metadata
+    const latestPositions = new Map<string, TrainPosition>();
+    for (const position of positions || []) {
       if (!latestPositions.has(position.train_no)) {
-        latestPositions.set(position.train_no, position);
+        const meta = metadataMap.get(position.train_no);
+        latestPositions.set(position.train_no, {
+          ...position,
+          destination: meta?.destination ?? null,
+          delay: null, // Delay not stored in DB, would need real-time API
+        });
       }
     }
 
