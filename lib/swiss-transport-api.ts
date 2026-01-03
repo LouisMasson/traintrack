@@ -56,10 +56,11 @@ export async function fetchSwissTrains(): Promise<TrainPosition[]> {
 
       // Use station coordinates as current position
       // (This is approximate - train is at/near this station)
+      // Swiss Transport API: x = longitude, y = latitude
       positions.push({
         train_no: trainNo,
-        latitude: station.coordinate.x,
-        longitude: station.coordinate.y,
+        latitude: station.coordinate.y,  // y = latitude
+        longitude: station.coordinate.x, // x = longitude
         speed: null, // Not available from this API
         direction: null,
         destination: entry.to || null,

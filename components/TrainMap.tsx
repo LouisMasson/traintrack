@@ -98,7 +98,6 @@ export default function TrainMap({ trains, onTrainClick, selectedTrain }: TrainM
     map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
     map.current.on('load', () => {
-      console.log('🗺️ Map loaded! Initializing clusters...');
       const mapInstance = map.current!;
 
       // Add train data source with clustering
@@ -166,38 +165,34 @@ export default function TrainMap({ trains, onTrainClick, selectedTrain }: TrainM
         },
       });
 
-      console.log('✨ Cluster layers added, first symbol layer:', firstSymbolId);
-
-      // Debug: general map click to see what's being clicked
+      // Universal click handler for clusters
+      // TODO: Fix cluster detection - queryRenderedFeatures doesn't find cluster layers
       mapInstance.on('click', (e) => {
-        const bbox = [
-          [e.point.x - 5, e.point.y - 5],
-          [e.point.x + 5, e.point.y + 5]
+        // Query with larger bbox for better hit detection
+        const bbox: [mapboxgl.PointLike, mapboxgl.PointLike] = [
+          [e.point.x - 10, e.point.y - 10],
+          [e.point.x + 10, e.point.y + 10]
         ];
-        const features = mapInstance.queryRenderedFeatures(bbox);
-        console.log('🖱️ Map clicked at:', e.lngLat);
-        console.log('Total features found:', features.length);
-        features.forEach((f, i) => {
-          console.log(`Feature ${i}: layer=${f.layer.id}, cluster=${f.properties?.cluster}, point_count=${f.properties?.point_count}`);
+
+        const features = mapInstance.queryRenderedFeatures(bbox, {
+          layers: ['clusters']
         });
-      });
 
-      // Click handler for clusters - show popup list
-      mapInstance.on('click', 'clusters', async (e) => {
-        console.log('Cluster clicked!');
-        const features = mapInstance.queryRenderedFeatures(e.point, { layers: ['clusters'] });
-        console.log('Features found:', features.length);
-        if (!features.length) return;
+        // Find cluster feature
+        const clusterFeature = features.find(f => f.properties?.cluster === true);
 
-        const clusterId = features[0].properties?.cluster_id;
+        if (!clusterFeature) return;
+
+        const clusterId = clusterFeature.properties?.cluster_id;
         const source = mapInstance.getSource('trains') as mapboxgl.GeoJSONSource;
-        const coordinates = (features[0].geometry as GeoJSON.Point).coordinates as [number, number];
-        console.log('Cluster ID:', clusterId, 'Coordinates:', coordinates);
+        const coordinates = (clusterFeature.geometry as GeoJSON.Point).coordinates as [number, number];
 
         // Get cluster leaves (individual trains)
         source.getClusterLeaves(clusterId, 100, 0, (err, leaves) => {
-          console.log('getClusterLeaves callback - err:', err, 'leaves:', leaves?.length);
-          if (err || !leaves) return;
+          if (err || !leaves) {
+            console.error('Error getting cluster leaves:', err);
+            return;
+          }
 
           const clusterTrains = leaves
             .map((leaf) => {
@@ -206,10 +201,7 @@ export default function TrainMap({ trains, onTrainClick, selectedTrain }: TrainM
             })
             .filter((t): t is TrainPosition => t !== undefined);
 
-          console.log('Cluster trains:', clusterTrains.length);
           if (clusterTrains.length > 0) {
-            // Show popup at cluster geographic coordinates
-            console.log('Setting cluster popup!');
             setClusterPopup({
               coordinates: coordinates,
               trains: clusterTrains,
@@ -226,7 +218,6 @@ export default function TrainMap({ trains, onTrainClick, selectedTrain }: TrainM
         mapInstance.getCanvas().style.cursor = '';
       });
 
-      console.log('✅ All event handlers registered');
       setMapLoaded(true);
     });
 
@@ -242,10 +233,7 @@ export default function TrainMap({ trains, onTrainClick, selectedTrain }: TrainM
 
     const source = map.current.getSource('trains') as mapboxgl.GeoJSONSource;
     if (source) {
-      const geoJSON = trainsToGeoJSON(trains);
-      console.log('📍 Updating train data:', trains.length, 'trains');
-      console.log('GeoJSON features:', geoJSON.features.length);
-      source.setData(geoJSON);
+      source.setData(trainsToGeoJSON(trains));
     }
   }, [trains, mapLoaded]);
 

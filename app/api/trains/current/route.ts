@@ -40,7 +40,7 @@ export async function GET() {
         latestPositions.set(position.train_no, {
           ...position,
           destination: meta?.destination ?? null,
-          delay: null, // Delay not stored in DB, would need real-time API
+          // delay is now stored in DB and available from position
         });
       }
     }
