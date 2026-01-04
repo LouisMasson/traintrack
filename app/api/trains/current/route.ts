@@ -40,7 +40,6 @@ export async function GET() {
         latestPositions.set(position.train_no, {
           ...position,
           destination: meta?.destination ?? null,
-          // delay is now stored in DB and available from position
         });
       }
     }

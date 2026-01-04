@@ -17,7 +17,6 @@ export async function GET(request: NextRequest) {
     }
 
     // Insert train positions
-    // Note: delay column doesn't exist in DB yet, will be added in migration
     const positionsToInsert = trains.map((train) => ({
       train_no: train.train_no,
       latitude: train.latitude,

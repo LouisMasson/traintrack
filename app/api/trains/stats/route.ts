@@ -12,6 +12,7 @@ export async function GET() {
       .select(`
         train_no,
         speed,
+        delay,
         timestamp
       `)
       .gte('timestamp', twoMinutesAgo)
@@ -98,13 +99,33 @@ export async function GET() {
       avgSpeed: speeds.length > 0 ? speeds.reduce((a, b) => a + b, 0) / speeds.length : 0,
     })).sort((a, b) => b.avgSpeed - a.avgSpeed);
 
-    // Delay distribution (placeholder - delay data not yet collected)
+    // Delay distribution (using real delay data)
+    const delays = {
+      onTime: 0,
+      minor: 0,      // 1-5 min
+      moderate: 0,   // 6-15 min
+      major: 0,      // >15 min
+    };
+
+    trains.forEach((train) => {
+      const delay = train.delay ?? 0;
+      if (delay <= 0) delays.onTime++;
+      else if (delay <= 5) delays.minor++;
+      else if (delay <= 15) delays.moderate++;
+      else delays.major++;
+    });
+
     const delayDistribution = [
-      { range: 'On Time', count: Math.floor(activeTrains * 0.7) },
-      { range: '1-5 min', count: Math.floor(activeTrains * 0.2) },
-      { range: '6-15 min', count: Math.floor(activeTrains * 0.08) },
-      { range: '>15 min', count: Math.floor(activeTrains * 0.02) },
+      { range: 'On Time', count: delays.onTime },
+      { range: '1-5 min', count: delays.minor },
+      { range: '6-15 min', count: delays.moderate },
+      { range: '>15 min', count: delays.major },
     ];
+
+    // Calculate on-time percentage
+    const onTimePercentage = activeTrains > 0
+      ? Math.round((delays.onTime / activeTrains) * 100)
+      : 0;
 
     // Hourly activity (last 24 hours)
     const hourlyCount = new Map<number, Set<string>>();
@@ -118,9 +139,6 @@ export async function GET() {
       hour: `${i.toString().padStart(2, '0')}:00`,
       count: hourlyCount.get(i)?.size || 0,
     }));
-
-    // On-time percentage (placeholder until delay data is available)
-    const onTimePercentage = 70 + Math.random() * 10; // Simulated 70-80%
 
     return NextResponse.json({
       activeTrains,
