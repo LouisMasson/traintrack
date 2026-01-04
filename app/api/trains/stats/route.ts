@@ -3,10 +3,11 @@ import { supabase } from '@/lib/supabase';
 
 export async function GET() {
   try {
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    // Use 20-minute window to handle GitHub Actions cron delays (can be 5-15 min during high load)
+    const twentyMinutesAgo = new Date(Date.now() - 20 * 60 * 1000).toISOString();
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-    // Get current active trains with metadata (GitHub Actions cron runs every minute)
+    // Get current active trains with metadata
     const { data: currentData, error: currentError } = await supabase
       .from('train_positions')
       .select(`
@@ -15,7 +16,7 @@ export async function GET() {
         delay,
         timestamp
       `)
-      .gte('timestamp', fiveMinutesAgo)
+      .gte('timestamp', twentyMinutesAgo)
       .order('timestamp', { ascending: false });
 
     if (currentError) {

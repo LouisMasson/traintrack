@@ -4,14 +4,15 @@ import { TrainPosition } from '@/types/train';
 
 export async function GET() {
   try {
-    // Get positions from the last 5 minutes (GitHub Actions cron runs every minute)
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    // Get positions from the last 20 minutes to handle GitHub Actions cron delays
+    // GitHub Actions scheduled crons can have 5-15 min delays during high load
+    const twentyMinutesAgo = new Date(Date.now() - 20 * 60 * 1000).toISOString();
 
     // Get the latest positions
     const { data: positions, error: positionsError } = await supabase
       .from('train_positions')
       .select('*')
-      .gte('timestamp', fiveMinutesAgo)
+      .gte('timestamp', twentyMinutesAgo)
       .order('timestamp', { ascending: false });
 
     if (positionsError) {
