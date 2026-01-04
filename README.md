@@ -2,6 +2,13 @@
 
 A real-time train tracking platform displaying Swiss train positions on an interactive map with comprehensive analytics dashboards.
 
+## 🚀 Live Demo
+
+**🌐 [https://traintrack-fawn.vercel.app/](https://traintrack-fawn.vercel.app/)**
+
+- 🗺️ [Interactive Map](https://traintrack-fawn.vercel.app/) - Real-time train positions with clustering
+- 📊 [Analytics Dashboard](https://traintrack-fawn.vercel.app/stats) - Comprehensive statistics and insights
+
 ![Next.js](https://img.shields.io/badge/Next.js-16.1-black?logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)
 ![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-green?logo=supabase)
