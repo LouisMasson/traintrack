@@ -1,0 +1,23 @@
+# Development files
+.env*
+.vscode/
+.idea/
+
+# Test files
+*.test.ts
+*.test.tsx
+__tests__/
+coverage/
+playwright-report/
+test-results/
+
+# Documentation
+*.md
+!README.md
+
+# Local scripts
+scripts/local-cron.sh
+
+# Git
+.git/
+.gitignore
