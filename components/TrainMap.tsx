@@ -105,7 +105,7 @@ export default function TrainMap({ trains, onTrainClick, selectedTrain }: TrainM
         type: 'geojson',
         data: trainsToGeoJSON([]),
         cluster: true,
-        clusterMaxZoom: 24, // Always show clusters, never individual trains
+        clusterMaxZoom: 14, // Max zoom to cluster (trains shown individually at zoom 15+)
         clusterRadius: 50,
       });
 
@@ -165,24 +165,25 @@ export default function TrainMap({ trains, onTrainClick, selectedTrain }: TrainM
         },
       });
 
-      // Universal click handler for clusters
-      // TODO: Fix cluster detection - queryRenderedFeatures doesn't find cluster layers
-      mapInstance.on('click', (e) => {
-        // Query with larger bbox for better hit detection
-        const bbox: [mapboxgl.PointLike, mapboxgl.PointLike] = [
-          [e.point.x - 10, e.point.y - 10],
-          [e.point.x + 10, e.point.y + 10]
-        ];
+      // Unclustered points (individual trains)
+      mapInstance.addLayer({
+        id: 'unclustered-point',
+        type: 'circle',
+        source: 'trains',
+        filter: ['!', ['has', 'point_count']],
+        paint: {
+          'circle-color': ['get', 'color'],
+          'circle-radius': 6,
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#fff',
+        },
+      });
 
-        const features = mapInstance.queryRenderedFeatures(bbox, {
-          layers: ['clusters']
-        });
+      // Layer-specific click handler for clusters
+      mapInstance.on('click', 'clusters', (e) => {
+        if (!e.features || e.features.length === 0) return;
 
-        // Find cluster feature
-        const clusterFeature = features.find(f => f.properties?.cluster === true);
-
-        if (!clusterFeature) return;
-
+        const clusterFeature = e.features[0];
         const clusterId = clusterFeature.properties?.cluster_id;
         const source = mapInstance.getSource('trains') as mapboxgl.GeoJSONSource;
         const coordinates = (clusterFeature.geometry as GeoJSON.Point).coordinates as [number, number];
@@ -229,11 +230,22 @@ export default function TrainMap({ trains, onTrainClick, selectedTrain }: TrainM
 
   // Update data when trains change
   useEffect(() => {
-    if (!map.current || !mapLoaded) return;
+    if (!map.current || !mapLoaded) {
+      console.log('TrainMap: Skipping update - map not ready', { hasMap: !!map.current, mapLoaded });
+      return;
+    }
 
     const source = map.current.getSource('trains') as mapboxgl.GeoJSONSource;
     if (source) {
-      source.setData(trainsToGeoJSON(trains));
+      const geojson = trainsToGeoJSON(trains);
+      console.log('TrainMap: Updating source with trains', {
+        trainCount: trains.length,
+        featureCount: geojson.features.length,
+        firstFeature: geojson.features[0]
+      });
+      source.setData(geojson);
+    } else {
+      console.error('TrainMap: Source not found!');
     }
   }, [trains, mapLoaded]);
 

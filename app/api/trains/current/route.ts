@@ -4,14 +4,14 @@ import { TrainPosition } from '@/types/train';
 
 export async function GET() {
   try {
-    // Get positions from the last 2 minutes to ensure we have recent data
-    const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+    // Get positions from the last 5 minutes to ensure we have recent data
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
 
     // Get the latest positions
     const { data: positions, error: positionsError } = await supabase
       .from('train_positions')
       .select('*')
-      .gte('timestamp', twoMinutesAgo)
+      .gte('timestamp', fiveMinutesAgo)
       .order('timestamp', { ascending: false });
 
     if (positionsError) {

@@ -22,19 +22,15 @@ export async function GET() {
       throw new Error(`Database error: ${currentError.message}`);
     }
 
-    // Get train metadata for type information
-    const { data: metadata, error: metadataError } = await supabase
-      .from('train_metadata')
-      .select('train_no, train_type');
-
-    if (metadataError) {
-      console.warn('Metadata error:', metadataError);
+    // Helper function to extract train type from train number
+    function getTrainType(trainNo: string): string {
+      if (trainNo.startsWith('ICE')) return 'ICE';
+      if (trainNo.startsWith('IC')) return 'IC';
+      if (trainNo.startsWith('IR')) return 'IR';
+      if (trainNo.startsWith('RE')) return 'RE';
+      if (trainNo.startsWith('S')) return 'S';
+      return 'Other';
     }
-
-    // Create metadata lookup map
-    const metadataMap = new Map(
-      metadata?.map((m) => [m.train_no, m.train_type]) || []
-    );
 
     // Get latest position per train
     const latestPositions = new Map();
@@ -72,14 +68,7 @@ export async function GET() {
     const typeSpeed = new Map<string, number[]>();
 
     trains.forEach((train) => {
-      let type = metadataMap.get(train.train_no) || 'Other';
-
-      // Simplify train types (extract main category)
-      if (type.startsWith('IC')) type = 'IC';
-      else if (type.startsWith('IR')) type = 'IR';
-      else if (type.startsWith('RE')) type = 'RE';
-      else if (type.startsWith('S')) type = 'S';
-      else type = 'Other';
+      const type = getTrainType(train.train_no);
 
       typeCount.set(type, (typeCount.get(type) || 0) + 1);
 
