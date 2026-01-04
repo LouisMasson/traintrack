@@ -1,0 +1,40 @@
+name: Collect Train Data
+
+on:
+  schedule:
+    # Runs every minute
+    - cron: '* * * * *'
+
+  # Allows manual triggering from GitHub Actions tab
+  workflow_dispatch:
+
+jobs:
+  collect-data:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Call Vercel Cron Endpoint
+        run: |
+          response=$(curl -s -w "\n%{http_code}" -X GET \
+            https://traintrack.vercel.app/api/cron/collect-trains \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+
+          echo "HTTP Status: $http_code"
+          echo "Response: $body"
+
+          # Fail workflow if HTTP status is not 200
+          if [ "$http_code" != "200" ]; then
+            echo "Error: Cron endpoint returned status $http_code"
+            exit 1
+          fi
+
+      - name: Log Success
+        if: success()
+        run: echo "✅ Train data collected successfully"
+
+      - name: Log Failure
+        if: failure()
+        run: echo "❌ Failed to collect train data"
