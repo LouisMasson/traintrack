@@ -16,7 +16,7 @@ jobs:
       - name: Call Vercel Cron Endpoint
         run: |
           response=$(curl -s -w "\n%{http_code}" -X GET \
-            https://traintrack.vercel.app/api/cron/collect-trains \
+            https://traintrack-fawn.vercel.app/api/cron/collect-trains \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
 
           http_code=$(echo "$response" | tail -n1)
